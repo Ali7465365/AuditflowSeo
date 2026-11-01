@@ -1,7 +1,8 @@
 import { ArrowRight, Loader2, Lock, Mail } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Logo } from '@/components/Logo';
-import { useAuth, type Profile } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { changePlan } from '@/lib/planChange';
 import { supabase } from '@/lib/supabase';
 import { PLAN_MAP, type PlanId } from '@/lib/plans';
 import { Link, useRouter } from '@/lib/router';
@@ -67,11 +68,10 @@ export function AuthPage() {
           return;
         }
         if (selectedPlan) {
-          const { data: plan, error: planError } = await supabase.rpc('set_plan', { p_plan: selectedPlan });
-          if (planError || !plan) {
+          try {
+            setProfile(await changePlan(selectedPlan));
+          } catch {
             setError('Your account was created, but the plan could not be selected. You can choose it on the billing page.');
-          } else {
-            setProfile(plan as Profile);
           }
         }
       } else {

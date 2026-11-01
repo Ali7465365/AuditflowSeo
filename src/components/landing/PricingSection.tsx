@@ -1,13 +1,36 @@
-import { Check, Sparkles } from 'lucide-react';
+import { Check, CheckCircle2, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { PaymentMethodModal } from '@/components/billing/PaymentMethodModal';
 import { useAuth } from '@/context/AuthContext';
-import { Link } from '@/lib/router';
+import { getPaymentMethod, type PaymentMethodId } from '@/lib/paymentMethods';
+import { changePlan } from '@/lib/planChange';
 import { PLANS, formatPrice, type Plan } from '@/lib/plans';
+import { useRouter } from '@/lib/router';
 
 function auditLimitLabel(plan: Plan) {
   return plan.auditLimit === null ? 'Unlimited audits / month' : `${plan.auditLimit} audits / month`;
 }
 
 export function PricingSection() {
+  const { session, profile, setProfile } = useAuth();
+  const { navigate } = useRouter();
+  const [targetPlan, setTargetPlan] = useState<Plan | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function handleContinue(plan: Plan, method: PaymentMethodId) {
+    if (!session) {
+      setTargetPlan(null);
+      navigate(`/auth?mode=signup&plan=${plan.id}`);
+      return;
+    }
+    const updated = await changePlan(plan.id);
+    setProfile(updated);
+    setTargetPlan(null);
+    setNotice(
+      `Your plan is now ${plan.name}. Payment method: ${getPaymentMethod(method).label} (demo mode, no charge was made).`,
+    );
+  }
+
   return (
     <section id="pricing" className="scroll-mt-20 border-t border-white/5 bg-slate-950 py-24 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -21,20 +44,45 @@ export function PricingSection() {
           </p>
         </div>
 
+        {notice && (
+          <p role="status" className="mx-auto mt-8 flex max-w-2xl items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {notice}
+          </p>
+        )}
+
         <div className="mt-16 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {PLANS.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              isCurrent={Boolean(session && profile?.plan === plan.id)}
+              onSelect={() => setTargetPlan(plan)}
+            />
           ))}
         </div>
       </div>
+
+      {targetPlan && (
+        <PaymentMethodModal
+          planName={targetPlan.name}
+          priceLabel={`${formatPrice(targetPlan.price)} / month`}
+          onClose={() => setTargetPlan(null)}
+          onContinue={(method) => handleContinue(targetPlan, method)}
+        />
+      )}
     </section>
   );
 }
 
-function PlanCard({ plan }: { plan: Plan }) {
+interface PlanCardProps {
+  plan: Plan;
+  isCurrent: boolean;
+  onSelect: () => void;
+}
+
+function PlanCard({ plan, isCurrent, onSelect }: PlanCardProps) {
   const highlighted = Boolean(plan.highlighted);
-  const { session } = useAuth();
-  const planHref = session ? '/dashboard/billing' : `/auth?mode=signup&plan=${plan.id}`;
 
   return (
     <article
@@ -59,9 +107,7 @@ function PlanCard({ plan }: { plan: Plan }) {
         <span className="text-sm text-slate-400">/ month</span>
       </div>
 
-      <p className="mt-4 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-slate-200">
-        {auditLimitLabel(plan)}
-      </p>
+      <p className="mt-4 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-slate-200">{auditLimitLabel(plan)}</p>
 
       <ul className="mt-6 flex-1 space-y-3">
         {plan.features.map((feature) => (
@@ -72,16 +118,20 @@ function PlanCard({ plan }: { plan: Plan }) {
         ))}
       </ul>
 
-      <Link
-        to={planHref}
-        className={`mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 ${
-          highlighted
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500'
-            : 'border border-white/10 bg-white/5 text-slate-100 hover:border-white/20 hover:bg-white/10'
+      <button
+        type="button"
+        onClick={onSelect}
+        disabled={isCurrent}
+        className={`mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:cursor-not-allowed ${
+          isCurrent
+            ? 'border border-indigo-500/40 text-indigo-200'
+            : highlighted
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 hover:-translate-y-0.5 hover:bg-indigo-500'
+              : 'border border-white/10 bg-white/5 text-slate-100 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10'
         }`}
       >
-        Select Plan
-      </Link>
+        {isCurrent ? 'Current plan' : 'Select Plan'}
+      </button>
     </article>
   );
 }

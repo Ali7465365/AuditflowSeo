@@ -1,36 +1,29 @@
-import { Check, Loader2, Sparkles } from 'lucide-react';
+import { Check, CheckCircle2, Sparkles } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth, useProfile, type Profile } from '@/context/AuthContext';
-import { PLANS, PLAN_MAP, formatPrice, type Plan, type PlanId } from '@/lib/plans';
-import { supabase } from '@/lib/supabase';
-import { formatDate, getUsage } from '@/lib/usage';
+import { PaymentMethodModal } from '@/components/billing/PaymentMethodModal';
 import { UsageBar } from '@/components/dashboard/UsageBar';
+import { useAuth, useProfile } from '@/context/AuthContext';
+import { getPaymentMethod, type PaymentMethodId } from '@/lib/paymentMethods';
+import { changePlan } from '@/lib/planChange';
+import { PLANS, PLAN_MAP, formatPrice, type Plan } from '@/lib/plans';
+import { formatDate, getUsage } from '@/lib/usage';
 
 export function BillingPage() {
   const profile = useProfile();
   const { setProfile } = useAuth();
-  const [pendingPlan, setPendingPlan] = useState<PlanId | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [targetPlan, setTargetPlan] = useState<Plan | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const usage = getUsage(profile);
   const currentPlan = PLAN_MAP[profile.plan];
 
-  async function changePlan(plan: Plan) {
-    if (pendingPlan || plan.id === profile.plan) return;
-    setError(null);
-    setNotice(null);
-    setPendingPlan(plan.id);
-
-    const { data, error: rpcError } = await supabase.rpc('set_plan', { p_plan: plan.id });
-    setPendingPlan(null);
-
-    if (rpcError || !data) {
-      setError('We could not change your plan. Please try again.');
-      return;
-    }
-    setProfile(data as Profile);
-    setNotice(`Your plan is now ${plan.name}. New limits apply immediately.`);
+  async function confirmPlan(plan: Plan, method: PaymentMethodId) {
+    const updated = await changePlan(plan.id);
+    setProfile(updated);
+    setTargetPlan(null);
+    setNotice(
+      `Your plan is now ${plan.name}. Payment method: ${getPaymentMethod(method).label} (demo mode, no charge was made).`,
+    );
   }
 
   return (
@@ -45,9 +38,7 @@ export function BillingPage() {
         <div className="lg:col-span-1">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Current plan</p>
           <p className="mt-2 text-2xl font-bold text-white">{currentPlan.name}</p>
-          <p className="mt-1 text-sm text-slate-400">
-            {formatPrice(currentPlan.price)} / month
-          </p>
+          <p className="mt-1 text-sm text-slate-400">{formatPrice(currentPlan.price)} / month</p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:col-span-2">
           <Stat label="Next billing date" value={formatDate(usage.nextBilling)} />
@@ -61,13 +52,9 @@ export function BillingPage() {
         </div>
       </section>
 
-      {error && (
-        <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          {error}
-        </p>
-      )}
       {notice && (
-        <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <p role="status" className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           {notice}
         </p>
       )}
@@ -78,7 +65,6 @@ export function BillingPage() {
           {PLANS.map((plan) => {
             const isCurrent = plan.id === profile.plan;
             const isUpgrade = plan.rank > currentPlan.rank;
-            const busy = pendingPlan === plan.id;
             const label = isCurrent ? 'Current plan' : isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
 
             return (
@@ -114,25 +100,31 @@ export function BillingPage() {
                 </ul>
                 <button
                   type="button"
-                  onClick={() => changePlan(plan)}
-                  disabled={isCurrent || pendingPlan !== null}
-                  className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed ${
+                  onClick={() => setTargetPlan(plan)}
+                  disabled={isCurrent}
+                  className={`mt-6 inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed ${
                     isCurrent
                       ? 'border border-indigo-500/40 text-indigo-200'
-                      : 'bg-indigo-600 text-white hover:-translate-y-0.5 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-400 disabled:hover:translate-y-0'
+                      : 'bg-indigo-600 text-white hover:-translate-y-0.5 hover:bg-indigo-500'
                   }`}
                 >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                   {label}
                 </button>
               </article>
             );
           })}
         </div>
-        <p className="mt-4 text-sm text-slate-500">
-          Demo billing: plan changes apply instantly and no payment is collected.
-        </p>
+        <p className="mt-6 text-sm text-slate-500">Demo billing: plan changes apply instantly and no payment is collected.</p>
       </section>
+
+      {targetPlan && (
+        <PaymentMethodModal
+          planName={targetPlan.name}
+          priceLabel={`${formatPrice(targetPlan.price)} / month`}
+          onClose={() => setTargetPlan(null)}
+          onContinue={(method) => confirmPlan(targetPlan, method)}
+        />
+      )}
     </div>
   );
 }
