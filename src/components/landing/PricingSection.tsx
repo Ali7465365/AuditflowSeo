@@ -1,4 +1,5 @@
 import { Check, Sparkles } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { Link } from '@/lib/router';
 import { PLANS, formatPrice, type Plan } from '@/lib/plans';
 
@@ -32,6 +33,8 @@ export function PricingSection() {
 
 function PlanCard({ plan }: { plan: Plan }) {
   const highlighted = Boolean(plan.highlighted);
+  const { session } = useAuth();
+  const planHref = session ? '/dashboard/billing' : `/auth?mode=signup&plan=${plan.id}`;
 
   return (
     <article
@@ -70,7 +73,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       </ul>
 
       <Link
-        to={`/auth?mode=signup&plan=${plan.id}`}
+        to={planHref}
         className={`mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 ${
           highlighted
             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500'

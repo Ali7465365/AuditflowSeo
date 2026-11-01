@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useAuth, useProfile, type Profile } from '@/context/AuthContext';
 import { PLANS, PLAN_MAP, formatPrice, type Plan, type PlanId } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
-import { Link } from '@/lib/router';
 import { formatDate, getUsage } from '@/lib/usage';
 import { UsageBar } from '@/components/dashboard/UsageBar';
 
@@ -130,11 +129,8 @@ export function BillingPage() {
             );
           })}
         </div>
-        <p className="mt-6 text-sm text-slate-500">
-          Demo billing: plan changes apply instantly and no payment is collected.{' '}
-          <Link to="/" className="text-slate-400 underline-offset-4 hover:text-white hover:underline">
-            Back to the public site
-          </Link>
+        <p className="mt-4 text-sm text-slate-500">
+          Demo billing: plan changes apply instantly and no payment is collected.
         </p>
       </section>
     </div>
