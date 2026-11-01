@@ -1,4 +1,4 @@
-import { Download, Eye, PlusCircle } from 'lucide-react';
+import { Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link, useRouter } from '@/lib/router';
@@ -26,6 +26,8 @@ const SUMMARY_COLUMNS =
 export function SavedAuditsPage() {
   const { navigate } = useRouter();
   const [state, setState] = useState<LoadState>({ status: 'loading' });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -49,6 +51,34 @@ export function SavedAuditsPage() {
     };
   }, []);
 
+  async function handleDelete(auditId: string) {
+    const confirmed = window.confirm('Are you sure you want to delete this audit?');
+    if (!confirmed) return;
+
+    setDeletingId(auditId);
+    setMessage(null);
+
+    const { error } = await supabase.from('audits').delete().eq('id', auditId);
+
+    setDeletingId(null);
+
+    if (error) {
+      setMessage('Failed to delete audit. Please try again.');
+      return;
+    }
+
+    // Remove from list (do NOT change audits_used count)
+    setState((prev) => {
+      if (prev.status !== 'ready') return prev;
+      return {
+        status: 'ready',
+        audits: prev.audits.filter((a) => a.id !== auditId),
+      };
+    });
+
+    setMessage('Audit deleted successfully');
+  }
+
   return (
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -65,6 +95,12 @@ export function SavedAuditsPage() {
           New audit
         </Link>
       </div>
+
+      {message && (
+        <p className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          {message}
+        </p>
+      )}
 
       {state.status === 'loading' && <p className="py-20 text-center text-slate-400">Loading your audits...</p>}
 
@@ -91,7 +127,7 @@ export function SavedAuditsPage() {
               <thead className="border-b border-white/10 bg-white/[0.02] text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-6 py-4 font-semibold">Business</th>
-                  <th className="px-6 py-4 font-semibold">Speed</th>
+                  <th className="px-6 py--4 font-semibold">Speed</th>
                   <th className="px-6 py-4 font-semibold">Reviews</th>
                   <th className="px-6 py-4 font-semibold">Created</th>
                   <th className="px-6 py-4 text-right font-semibold">Actions</th>
@@ -132,6 +168,15 @@ export function SavedAuditsPage() {
                         >
                           <Download className="h-3.5 w-3.5" />
                           PDF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(audit.id)}
+                          disabled={deletingId === audit.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/40 px-3 py-2 text-xs font-medium text-rose-300 transition-colors hover:bg-rose-500/10 disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          {deletingId === audit.id ? 'Deleting...' : 'Delete'}
                         </button>
                       </div>
                     </td>
