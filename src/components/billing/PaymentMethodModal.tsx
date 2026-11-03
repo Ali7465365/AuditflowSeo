@@ -1,6 +1,7 @@
 import { CheckCircle2, Loader2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PAYMENT_METHODS, type PaymentMethodId } from '@/lib/paymentMethods';
+import { useModalDismiss } from '@/lib/useModalDismiss';
 
 interface PaymentMethodModalProps {
   planName: string;
@@ -14,18 +15,7 @@ export function PaymentMethodModal({ planName, priceLabel, onClose, onContinue }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !submitting) onClose();
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [submitting, onClose]);
+  useModalDismiss(onClose, !submitting);
 
   async function handleContinue() {
     if (!selected || submitting) return;

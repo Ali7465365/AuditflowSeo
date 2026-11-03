@@ -1,5 +1,6 @@
-import { Check, CheckCircle2, Sparkles } from 'lucide-react';
+import { Check, CheckCircle2, Download, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { InvoiceModal } from '@/components/billing/InvoiceModal';
 import { PaymentMethodModal } from '@/components/billing/PaymentMethodModal';
 import { UsageBar } from '@/components/dashboard/UsageBar';
 import { useAuth, useProfile } from '@/context/AuthContext';
@@ -13,6 +14,7 @@ export function BillingPage() {
   const { setProfile } = useAuth();
   const [targetPlan, setTargetPlan] = useState<Plan | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
 
   const usage = getUsage(profile);
   const currentPlan = PLAN_MAP[profile.plan];
@@ -28,10 +30,20 @@ export function BillingPage() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wider text-indigo-400">Plan & billing</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Your plan and audit credits</h1>
-        <p className="mt-2 text-slate-400">Upgrade or downgrade at any time. Changes take effect immediately.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wider text-indigo-400">Plan & billing</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Your plan and audit credits</h1>
+          <p className="mt-2 text-slate-400">Upgrade or downgrade at any time. Changes take effect immediately.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setInvoiceOpen(true)}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-600/10 px-5 py-3 text-sm font-semibold text-indigo-200 transition-all hover:-translate-y-0.5 hover:bg-indigo-600/20"
+        >
+          <Download className="h-4 w-4" aria-hidden="true" />
+          Download Invoice
+        </button>
       </div>
 
       <section className="grid gap-6 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-xl sm:p-8 lg:grid-cols-3">
@@ -116,6 +128,8 @@ export function BillingPage() {
         </div>
         <p className="mt-6 text-sm text-slate-500">Demo billing: plan changes apply instantly and no payment is collected.</p>
       </section>
+
+      {invoiceOpen && <InvoiceModal profile={profile} onClose={() => setInvoiceOpen(false)} />}
 
       {targetPlan && (
         <PaymentMethodModal

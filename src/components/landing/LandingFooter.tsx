@@ -42,9 +42,17 @@ export function LandingFooter() {
         </div>
       </div>
       <div className="border-t border-white/5">
-        <p className="mx-auto max-w-7xl px-4 py-6 text-center text-xs text-slate-500 sm:px-6 lg:px-8">
-          © {new Date().getFullYear()} AuditFlow SEO. All rights reserved.
-        </p>
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-8 text-center sm:px-6 lg:px-8">
+          <p className="text-sm font-medium text-slate-300">
+            Built with ❤️ by <span className="text-indigo-400">Syed Muhammad Aoun</span>
+          </p>
+          <p className="max-w-xl text-xs leading-[1.6] text-slate-500">
+            Full-stack developer from Pakistan, focused on building clean SaaS products and tools for local businesses.
+          </p>
+          <p className="pt-3 text-xs text-slate-500">
+            © {new Date().getFullYear()} AuditFlow SEO. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   );
