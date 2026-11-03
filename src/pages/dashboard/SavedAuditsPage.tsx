@@ -1,4 +1,4 @@
-import { Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
+import { Download, Eye, PlusCircle, Trash2, History } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Link, useRouter } from '@/lib/router';
@@ -67,7 +67,6 @@ export function SavedAuditsPage() {
       return;
     }
 
-    // Remove from list (do NOT change audits_used count)
     setState((prev) => {
       if (prev.status !== 'ready') return prev;
       return {
@@ -83,16 +82,18 @@ export function SavedAuditsPage() {
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-indigo-400">Saved audits</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Your audit history</h1>
-          <p className="mt-2 text-slate-400">Open any report or download it again as a PDF.</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+            <History className="h-4 w-4" /> History
+          </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">Audit History</h1>
+          <p className="mt-2 text-slate-400">All your previous audits. Download or delete anytime.</p>
         </div>
         <Link
           to="/dashboard/new"
           className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all hover:-translate-y-0.5 hover:bg-indigo-500"
         >
           <PlusCircle className="h-4 w-4" />
-          New audit
+          New Audit
         </Link>
       </div>
 
@@ -102,11 +103,13 @@ export function SavedAuditsPage() {
         </p>
       )}
 
-      {state.status === 'loading' && <p className="py-20 text-center text-slate-400">Loading your audits...</p>}
+      {state.status === 'loading' && (
+        <p className="py-20 text-center text-slate-400">Loading your history...</p>
+      )}
 
       {state.status === 'error' && (
-        <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          We could not load your saved audits. Please refresh the page and try again.
+        <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          Could not load history. Please refresh.
         </p>
       )}
 
@@ -114,8 +117,11 @@ export function SavedAuditsPage() {
         <div className="rounded-2xl border border-dashed border-white/15 bg-slate-900/40 px-6 py-16 text-center">
           <p className="text-lg font-semibold text-white">No audits yet</p>
           <p className="mt-2 text-slate-400">Run your first audit and it will appear here.</p>
-          <Link to="/dashboard/new" className="mt-6 inline-flex rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">
-            Run an audit
+          <Link
+            to="/dashboard/new"
+            className="mt-6 inline-flex rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500"
+          >
+            Run an Audit
           </Link>
         </div>
       )}
@@ -127,19 +133,19 @@ export function SavedAuditsPage() {
               <thead className="border-b border-white/10 bg-white/[0.02] text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-6 py-4 font-semibold">Business</th>
-                  <th className="px-6 py--4 font-semibold">Speed</th>
+                  <th className="px-6 py-4 font-semibold">Speed</th>
                   <th className="px-6 py-4 font-semibold">Reviews</th>
-                  <th className="px-6 py-4 font-semibold">Created</th>
+                  <th className="px-6 py-4 font-semibold">Date</th>
                   <th className="px-6 py-4 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {state.audits.map((audit) => (
-                  <tr key={audit.id} className="transition-colors hover:bg-white/[0.03]">
+                  <tr key={audit.id} className="hover:bg-white/[0.03]">
                     <td className="px-6 py-4">
                       <p className="font-medium text-white">{audit.business_name ?? audit.target_url}</p>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {audit.target_kind === 'google_maps' ? 'Google Maps listing' : 'Website'}
+                        {audit.target_kind === 'google_maps' ? 'Google Maps' : 'Website'}
                       </p>
                     </td>
                     <td className="px-6 py-4">
@@ -149,34 +155,30 @@ export function SavedAuditsPage() {
                       <span className="text-slate-500"> / 100</span>
                     </td>
                     <td className="px-6 py-4 text-slate-300">
-                      {audit.review_rating === null ? 'No data' : `${audit.review_rating.toFixed(1)} (${audit.review_count ?? 0})`}
+                      {audit.review_rating === null ? '—' : `${audit.review_rating.toFixed(1)} (${audit.review_count ?? 0})`}
                     </td>
                     <td className="px-6 py-4 text-slate-400">{formatDate(audit.created_at)}</td>
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
                         <Link
                           to={`/dashboard/audits/${audit.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 transition-colors hover:border-white/20 hover:bg-white/5"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/5"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          View
+                          <Eye className="h-3.5 w-3.5" /> View
                         </Link>
                         <button
-                          type="button"
                           onClick={() => navigate(`/dashboard/audits/${audit.id}?download=1`)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600/90 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
                         >
-                          <Download className="h-3.5 w-3.5" />
-                          PDF
+                          <Download className="h-3.5 w-3.5" /> PDF
                         </button>
                         <button
-                          type="button"
                           onClick={() => handleDelete(audit.id)}
                           disabled={deletingId === audit.id}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/40 px-3 py-2 text-xs font-medium text-rose-300 transition-colors hover:bg-rose-500/10 disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/40 px-3 py-2 text-xs font-medium text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          {deletingId === audit.id ? 'Deleting...' : 'Delete'}
+                          {deletingId === audit.id ? '...' : 'Delete'}
                         </button>
                       </div>
                     </td>
