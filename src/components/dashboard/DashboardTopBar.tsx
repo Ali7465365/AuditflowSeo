@@ -9,6 +9,11 @@ interface DashboardTopBarProps {
   onMenuClick: () => void;
 }
 
+function avatarInitial(email: string) {
+  const letter = email.trim().charAt(0);
+  return letter ? letter.toUpperCase() : '?';
+}
+
 export function DashboardTopBar({ onMenuClick }: DashboardTopBarProps) {
   const profile = useProfile();
   const { signOut } = useAuth();
@@ -41,10 +46,23 @@ export function DashboardTopBar({ onMenuClick }: DashboardTopBarProps) {
         </span>
       </div>
 
-      <div className="flex items-center gap-4 sm:gap-6">
+      <div className="flex items-center gap-3 sm:gap-5">
         <div className="hidden w-56 md:block">
           <UsageBar profile={profile} />
         </div>
+
+        <div className="flex items-center gap-2.5">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white ring-2 ring-indigo-500/30"
+            aria-hidden="true"
+          >
+            {avatarInitial(profile.email)}
+          </span>
+          <span className="hidden max-w-[180px] truncate text-sm text-slate-300 lg:inline">
+            {profile.email}
+          </span>
+        </div>
+
         <button
           type="button"
           onClick={handleSignOut}

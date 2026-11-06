@@ -58,18 +58,30 @@ export function SavedAuditsPage() {
   }, []);
 
   async function handleDelete(auditId: string) {
-    const confirmed = window.confirm('Are you sure you want to delete this audit?');
+    const confirmed = window.confirm('Permanently delete this audit? This cannot be undone.');
     if (!confirmed) return;
 
     setDeletingId(auditId);
     setMessage(null);
 
-    const { error } = await supabase.from('audits').delete().eq('id', auditId);
+    const { error, count } = await supabase
+      .from('audits')
+      .delete({ count: 'exact' })
+      .eq('id', auditId);
 
     setDeletingId(null);
 
     if (error) {
       setMessage('Failed to delete audit. Please try again.');
+      return;
+    }
+
+    if (count === 0) {
+      setState((prev) => {
+        if (prev.status !== 'ready') return prev;
+        return { status: 'ready', audits: prev.audits.filter((a) => a.id !== auditId) };
+      });
+      setMessage('This audit was already removed.');
       return;
     }
 
@@ -81,7 +93,7 @@ export function SavedAuditsPage() {
       };
     });
 
-    setMessage('Audit deleted. Your monthly audit count is unchanged.');
+    setMessage('Audit permanently deleted. Your monthly audit count is unchanged.');
   }
 
   const audits = state.status === 'ready' ? state.audits : [];
