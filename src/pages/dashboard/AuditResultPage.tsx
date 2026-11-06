@@ -110,6 +110,7 @@ export function AuditResultPage({ auditId }: AuditResultPageProps) {
           audit={state.audit}
           removesWatermark={plan.removesWatermark}
           logoData={profile.agency_logo_data}
+          planId={plan.id}
         />
       )}
     </div>
