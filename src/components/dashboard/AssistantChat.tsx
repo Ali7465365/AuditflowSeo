@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useProfile } from '@/context/AuthContext';
 import { generateAssistantResponse } from '@/lib/assistant';
 import { useModalDismiss } from '@/lib/useModalDismiss';
+import { supabase } from '@/lib/supabase';
+import type { AuditRecord } from '@/lib/audits';
 
 interface ChatMessage {
   id: number;
@@ -14,14 +16,14 @@ const GREETING: ChatMessage = {
   id: 0,
   role: 'assistant',
   text:
-    "Hi, I'm AuditFlow AI. Ask me how to run an audit, what a report check means, how to improve a URL, or which plan fits your work. I only help with AuditFlow SEO and website audits.",
+    "Hi, I'm AuditFlow AI. Ask me what this app is, who built it, how to use it, or research a URL you already audited.",
 };
 
 const SUGGESTIONS = [
+  'What is AuditFlow SEO?',
+  'Who made this app?',
   'How do I run an audit?',
-  'What does the Overall Score mean?',
-  'How do I improve my score?',
-  'Which plan should I choose?',
+  'Research my last URL',
 ];
 
 export function AssistantChat() {
@@ -30,10 +32,32 @@ export function AssistantChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
+  const [latestAudit, setLatestAudit] = useState<AuditRecord | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useModalDismiss(() => setOpen(false), open, { lockScroll: false });
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      const { data } = await supabase
+        .from('audits')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (active && data) {
+        setLatestAudit(data as AuditRecord);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [profile.user_id]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -58,7 +82,10 @@ export function AssistantChat() {
     setThinking(true);
 
     window.setTimeout(() => {
-      const result = generateAssistantResponse(trimmed, profile.plan);
+      const result = generateAssistantResponse(trimmed, {
+        currentPlan: profile.plan,
+        latestAudit,
+      });
       const assistantMessage: ChatMessage = {
         id: Date.now() + 1,
         role: 'assistant',
@@ -100,7 +127,7 @@ export function AssistantChat() {
               AuditFlow AI
               <Sparkles className="h-3.5 w-3.5 text-indigo-400" aria-hidden="true" />
             </p>
-            <p className="text-xs text-slate-400">SEO &amp; audit assistant</p>
+            <p className="text-xs text-slate-400">App info &amp; URL research</p>
           </div>
         </div>
         <button
@@ -152,7 +179,7 @@ export function AssistantChat() {
             type="text"
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Ask about audits, reports, or plans..."
+            placeholder="Ask about the app or your audited URL..."
             className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           />
           <button
