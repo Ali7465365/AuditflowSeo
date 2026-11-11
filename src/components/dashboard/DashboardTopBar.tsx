@@ -1,17 +1,13 @@
 import { LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { UsageBar } from '@/components/dashboard/UsageBar';
-import { useAuth, useProfile } from '@/context/AuthContext';
+import { useAuth, useProfile, DEFAULT_AVATAR_STYLE, type AvatarStyle } from '@/context/AuthContext';
 import { PLAN_MAP } from '@/lib/plans';
+import { avatarClasses, avatarInitial } from '@/lib/avatar';
 import { useRouter } from '@/lib/router';
 
 interface DashboardTopBarProps {
   onMenuClick: () => void;
-}
-
-function avatarInitial(email: string) {
-  const letter = email.trim().charAt(0);
-  return letter ? letter.toUpperCase() : '?';
 }
 
 export function DashboardTopBar({ onMenuClick }: DashboardTopBarProps) {
@@ -20,6 +16,7 @@ export function DashboardTopBar({ onMenuClick }: DashboardTopBarProps) {
   const { navigate } = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const plan = PLAN_MAP[profile.plan];
+  const avatarStyle: AvatarStyle = profile.avatar_style ?? DEFAULT_AVATAR_STYLE;
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -52,10 +49,7 @@ export function DashboardTopBar({ onMenuClick }: DashboardTopBarProps) {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white ring-2 ring-indigo-500/30"
-            aria-hidden="true"
-          >
+          <span className={avatarClasses(avatarStyle, 'h-9 w-9 text-sm')} aria-hidden="true">
             {avatarInitial(profile.email)}
           </span>
           <span className="hidden max-w-[180px] truncate text-sm text-slate-300 lg:inline">

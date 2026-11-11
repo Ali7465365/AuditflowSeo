@@ -1,5 +1,6 @@
 import { Gauge, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { useState, type ChangeEvent } from 'react';
+import { AvatarCustomizer } from '@/components/dashboard/AvatarCustomizer';
 import { useAuth, useProfile, type Profile } from '@/context/AuthContext';
 import { PLAN_MAP } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
@@ -168,6 +169,8 @@ export function AgencySettingsPage() {
           </p>
         </section>
       </div>
+
+      <AvatarCustomizer />
     </div>
   );
 }

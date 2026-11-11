@@ -17,7 +17,7 @@ function buildInvoiceNumber(issuedAt: Date, userId: string) {
 
 export function InvoiceModal({ profile, onClose }: InvoiceModalProps) {
   const [issuedAt] = useState(() => new Date());
-  useModalDismiss(onClose, true);
+  useModalDismiss(onClose, true, { lockScroll: true });
 
   const plan = PLAN_MAP[profile.plan];
   const invoiceNumber = buildInvoiceNumber(issuedAt, profile.user_id);

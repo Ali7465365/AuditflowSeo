@@ -4,10 +4,12 @@
 
 html {
   color-scheme: dark;
+  scroll-behavior: smooth;
 }
 
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
+  overflow-y: auto;
 }
 
 @keyframes modal-in {

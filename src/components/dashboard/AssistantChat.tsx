@@ -33,7 +33,7 @@ export function AssistantChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useModalDismiss(() => setOpen(false), open);
+  useModalDismiss(() => setOpen(false), open, { lockScroll: false });
 
   useEffect(() => {
     if (scrollRef.current) {

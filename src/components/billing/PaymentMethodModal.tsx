@@ -15,7 +15,7 @@ export function PaymentMethodModal({ planName, priceLabel, onClose, onContinue }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useModalDismiss(onClose, !submitting);
+  useModalDismiss(onClose, !submitting, { lockScroll: true });
 
   async function handleContinue() {
     if (!selected || submitting) return;

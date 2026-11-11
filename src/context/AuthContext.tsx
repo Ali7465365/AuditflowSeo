@@ -3,6 +3,27 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { supabase } from '@/lib/supabase';
 import type { PlanId } from '@/lib/plans';
 
+export interface AvatarStyle {
+  bg: string;
+  text: string;
+  shape: 'circle' | 'rounded' | 'square';
+  ring: 'none' | 'indigo' | 'white' | 'dark';
+  size: 'sm' | 'md' | 'lg';
+  font: 'normal' | 'bold' | 'mono';
+  gradient?: string;
+  shadow: boolean;
+}
+
+export const DEFAULT_AVATAR_STYLE: AvatarStyle = {
+  bg: 'indigo',
+  text: 'white',
+  shape: 'circle',
+  ring: 'indigo',
+  size: 'md',
+  font: 'bold',
+  shadow: true,
+};
+
 export interface Profile {
   user_id: string;
   email: string;
@@ -10,6 +31,7 @@ export interface Profile {
   audits_used: number;
   period_start: string;
   agency_logo_data: string | null;
+  avatar_style: AvatarStyle | null;
 }
 
 interface AuthValue {
@@ -24,7 +46,7 @@ interface AuthValue {
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-const PROFILE_COLUMNS = 'user_id, email, plan, audits_used, period_start, agency_logo_data';
+const PROFILE_COLUMNS = 'user_id, email, plan, audits_used, period_start, agency_logo_data, avatar_style';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
