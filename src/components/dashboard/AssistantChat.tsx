@@ -26,6 +26,18 @@ const SUGGESTIONS = [
   'Research my last URL',
 ];
 
+async function fetchLatestAudit(): Promise<AuditRecord | null> {
+  const { data, error } = await supabase
+    .from('audits')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data as AuditRecord;
+}
+
 export function AssistantChat() {
   const profile = useProfile();
   const [open, setOpen] = useState(false);
@@ -38,26 +50,28 @@ export function AssistantChat() {
 
   useModalDismiss(() => setOpen(false), open, { lockScroll: false });
 
+  // Load once on login
   useEffect(() => {
     let active = true;
-
-    (async () => {
-      const { data } = await supabase
-        .from('audits')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (active && data) {
-        setLatestAudit(data as AuditRecord);
-      }
-    })();
-
+    fetchLatestAudit().then((audit) => {
+      if (active) setLatestAudit(audit);
+    });
     return () => {
       active = false;
     };
   }, [profile.user_id]);
+
+  // Reload every time chat opens (after you run a new audit)
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    fetchLatestAudit().then((audit) => {
+      if (active) setLatestAudit(audit);
+    });
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -72,7 +86,7 @@ export function AssistantChat() {
     }
   }, [open]);
 
-  function sendMessage(text: string) {
+  async function sendMessage(text: string) {
     const trimmed = text.trim();
     if (!trimmed || thinking) return;
 
@@ -81,24 +95,27 @@ export function AssistantChat() {
     setInput('');
     setThinking(true);
 
-    window.setTimeout(() => {
-      const result = generateAssistantResponse(trimmed, {
-        currentPlan: profile.plan,
-        latestAudit,
-      });
-      const assistantMessage: ChatMessage = {
-        id: Date.now() + 1,
-        role: 'assistant',
-        text: result.response,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setThinking(false);
-    }, 650);
+    // Always fetch the newest audit right before answering
+    const audit = (await fetchLatestAudit()) ?? latestAudit;
+    if (audit) setLatestAudit(audit);
+
+    const result = generateAssistantResponse(trimmed, {
+      currentPlan: profile.plan,
+      latestAudit: audit,
+    });
+
+    const assistantMessage: ChatMessage = {
+      id: Date.now() + 1,
+      role: 'assistant',
+      text: result.response,
+    };
+    setMessages((prev) => [...prev, assistantMessage]);
+    setThinking(false);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    sendMessage(input);
+    void sendMessage(input);
   }
 
   if (!open) {
@@ -162,7 +179,7 @@ export function AssistantChat() {
               <button
                 key={suggestion}
                 type="button"
-                onClick={() => sendMessage(suggestion)}
+                onClick={() => void sendMessage(suggestion)}
                 className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-indigo-500/40 hover:text-white"
               >
                 {suggestion}
