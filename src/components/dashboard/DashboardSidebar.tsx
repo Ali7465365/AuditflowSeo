@@ -1,4 +1,4 @@
-import { Building2, CreditCard, History, PlusCircle, X, type LucideIcon } from 'lucide-react';
+import { Building2, CreditCard, History, MessageSquare, PlusCircle, X, type LucideIcon } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Link, useRouter } from '@/lib/router';
 
@@ -33,6 +33,12 @@ const NAV_ITEMS: NavItem[] = [
     to: '/dashboard/settings',
     icon: Building2,
     isActive: (pathname) => pathname.startsWith('/dashboard/settings'),
+  },
+  {
+    label: 'Message Developer',
+    to: '/dashboard/message-developer',
+    icon: MessageSquare,
+    isActive: (pathname) => pathname.startsWith('/dashboard/message-developer'),
   },
 ];
 

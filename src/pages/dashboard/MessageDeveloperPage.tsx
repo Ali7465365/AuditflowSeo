@@ -2,7 +2,7 @@ import { Lock, Send } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useProfile } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { avatarClasses, avatarInitial } from '@/lib/avatar';
+import { avatarClasses } from '@/lib/avatar';
 import { DEFAULT_AVATAR_STYLE } from '@/context/AuthContext';
 
 export const DEVELOPER_EMAIL = 'maoun2012@gmail.com';
@@ -202,5 +202,3 @@ export function MessageDeveloperPage() {
     </div>
   );
 }
-
-export { avatarInitial };

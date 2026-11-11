@@ -8,6 +8,7 @@ import { AgencySettingsPage } from '@/pages/dashboard/AgencySettingsPage';
 import { AuditResultPage } from '@/pages/dashboard/AuditResultPage';
 import { BillingPage } from '@/pages/dashboard/BillingPage';
 import { NewAuditPage } from '@/pages/dashboard/NewAuditPage';
+import { MessageDeveloperPage } from '@/pages/dashboard/MessageDeveloperPage';
 import { SavedAuditsPage } from '@/pages/dashboard/SavedAuditsPage';
 
 const AUDIT_ROUTE = /^\/dashboard\/audits\/([^/]+)$/;
@@ -40,6 +41,8 @@ function renderDashboardPage(pathname: string) {
       return <BillingPage />;
     case '/dashboard/settings':
       return <AgencySettingsPage />;
+    case '/dashboard/message-developer':
+      return <MessageDeveloperPage />;
     default:
       return <NotFoundPage />;
   }

@@ -70,7 +70,7 @@ export function AvatarCustomizer() {
               key={opt.id}
               label={opt.label}
               active={draft.bg === opt.id && (draft.gradient ?? 'none') === 'none'}
-              onClick={() => update('gradient', 'none') || update('bg', opt.id)}
+              onClick={() => { update('gradient', 'none'); update('bg', opt.id); }}
             >
               <span className={`h-5 w-5 rounded-full ${opt.class}`} />
             </SwatchButton>
