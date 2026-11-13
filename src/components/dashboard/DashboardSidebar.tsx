@@ -1,4 +1,4 @@
-import { Building2, CreditCard, History, MessageSquare, PlusCircle, X, type LucideIcon } from 'lucide-react';
+import { Building2, CreditCard, History, MessageSquare, Newspaper, PlusCircle, X, type LucideIcon } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { Link, useRouter } from '@/lib/router';
 
@@ -21,6 +21,12 @@ const NAV_ITEMS: NavItem[] = [
     to: '/dashboard/saved',
     icon: History,
     isActive: (pathname) => pathname.startsWith('/dashboard/saved') || pathname.startsWith('/dashboard/audits/'),
+  },
+  {
+    label: 'Public Feed',
+    to: '/dashboard/feed',
+    icon: Newspaper,
+    isActive: (pathname) => pathname.startsWith('/dashboard/feed'),
   },
   {
     label: 'Plan & Billing',

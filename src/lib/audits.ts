@@ -30,9 +30,11 @@ export interface AuditRecord {
   competitor_review_count: number | null;
   seo_checks: SeoCheck[];
   created_at: string;
+  is_published?: boolean;
+  published_at?: string | null;
 }
 
-export type AuditPayload = Omit<AuditRecord, 'id' | 'created_at'>;
+export type AuditPayload = Omit<AuditRecord, 'id' | 'created_at' | 'is_published' | 'published_at'>;
 
 export const AUDIT_STEPS = [
   'Crawling page and reading content...',

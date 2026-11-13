@@ -7,11 +7,14 @@ import { SamplePage } from '@/pages/SamplePage';
 import { AgencySettingsPage } from '@/pages/dashboard/AgencySettingsPage';
 import { AuditResultPage } from '@/pages/dashboard/AuditResultPage';
 import { BillingPage } from '@/pages/dashboard/BillingPage';
+import { FeedPostPage } from '@/pages/dashboard/FeedPostPage';
 import { NewAuditPage } from '@/pages/dashboard/NewAuditPage';
 import { MessageDeveloperPage } from '@/pages/dashboard/MessageDeveloperPage';
+import { PublicFeedPage } from '@/pages/dashboard/PublicFeedPage';
 import { SavedAuditsPage } from '@/pages/dashboard/SavedAuditsPage';
 
 const AUDIT_ROUTE = /^\/dashboard\/audits\/([^/]+)$/;
+const FEED_POST_ROUTE = /^\/dashboard\/feed\/([^/]+)$/;
 
 function NotFoundPage() {
   return (
@@ -31,12 +34,19 @@ function renderDashboardPage(pathname: string) {
     return <AuditResultPage auditId={decodeURIComponent(auditMatch[1])} />;
   }
 
+  const feedPostMatch = pathname.match(FEED_POST_ROUTE);
+  if (feedPostMatch) {
+    return <FeedPostPage auditId={decodeURIComponent(feedPostMatch[1])} />;
+  }
+
   switch (pathname) {
     case '/dashboard':
     case '/dashboard/new':
       return <NewAuditPage />;
     case '/dashboard/saved':
       return <SavedAuditsPage />;
+    case '/dashboard/feed':
+      return <PublicFeedPage />;
     case '/dashboard/billing':
       return <BillingPage />;
     case '/dashboard/settings':
