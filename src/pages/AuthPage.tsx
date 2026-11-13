@@ -6,6 +6,13 @@ import { changePlan } from '@/lib/planChange';
 import { supabase } from '@/lib/supabase';
 import { PLAN_MAP, type PlanId } from '@/lib/plans';
 import { Link, useRouter } from '@/lib/router';
+import { isTempEmail } from '@/lib/emailValidation';
+
+// before supabase.auth.signUp
+if (isTempEmail(email)) {
+  setError('Temporary emails are not allowed. Please use a real email address.');
+  return;
+}
 
 const PAID_PLAN_IDS: string[] = ['pro', 'ultra', 'exclusive'];
 
