@@ -8,12 +8,6 @@ import { PLAN_MAP, type PlanId } from '@/lib/plans';
 import { Link, useRouter } from '@/lib/router';
 import { isTempEmail } from '@/lib/emailValidation';
 
-// before supabase.auth.signUp
-if (isTempEmail(email)) {
-  setError('Temporary emails are not allowed. Please use a real email address.');
-  return;
-}
-
 const PAID_PLAN_IDS: string[] = ['pro', 'ultra', 'exclusive'];
 
 function describeAuthError(message: string) {
@@ -64,6 +58,10 @@ export function AuthPage() {
 
     try {
       if (mode === 'signup') {
+        if (isTempEmail(email)) {
+          setError('Temporary emails are not allowed. Please use a real email address.');
+          return;
+        }
         const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
         if (signUpError) {
           setError(describeAuthError(signUpError.message));
