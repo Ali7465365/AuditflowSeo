@@ -1,6 +1,7 @@
 import { CheckCircle2, Gauge, XCircle } from 'lucide-react';
 import type { AuditRecord, Priority, SeoCheck } from '@/lib/audits';
 import { buildRecommendations, computeOverallScore } from '@/lib/audits';
+import { buildExecutiveSummary } from '@/lib/reportText';
 import type { PlanId } from '@/lib/plans';
 import { formatDate } from '@/lib/usage';
 
@@ -9,6 +10,8 @@ interface AuditReportProps {
   removesWatermark: boolean;
   logoData: string | null;
   planId?: PlanId;
+  brandColor?: string | null;
+  agencyName?: string | null;
 }
 
 function scoreTone(score: number) {
@@ -37,13 +40,15 @@ function competitorGapText(audit: AuditRecord) {
   return 'This business and the top competitor have the same number of reviews.';
 }
 
-export function AuditReport({ audit, removesWatermark, logoData, planId = 'free' }: AuditReportProps) {
+export function AuditReport({ audit, removesWatermark, logoData, planId = 'free', brandColor, agencyName }: AuditReportProps) {
   const overall = computeOverallScore(audit);
   const tone = scoreTone(audit.pagespeed_score);
   const overallTone = scoreTone(overall);
   const businessName = audit.business_name ?? audit.target_url;
   const passedChecks = audit.seo_checks.filter((check) => check.passed).length;
   const recommendations = buildRecommendations(audit, planId);
+  const accent = brandColor ?? '#4f46e5';
+  const summaryLines = buildExecutiveSummary(audit);
 
   const showCompetitorAnalysis = planId === 'ultra' || planId === 'exclusive';
   const showPriorityRecs = planId !== 'free';
@@ -60,13 +65,13 @@ export function AuditReport({ audit, removesWatermark, logoData, planId = 'free'
             <img src={logoData} alt="Agency logo" className="h-10 max-w-[200px] object-contain object-left" />
           ) : (
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: accent }}>
                 <Gauge className="h-4 w-4 text-white" aria-hidden="true" />
               </span>
-              <span className="font-semibold text-slate-900">AuditFlow SEO</span>
+              <span className="font-semibold text-slate-900">{removesWatermark && agencyName ? agencyName : 'AuditFlow SEO'}</span>
             </div>
           )}
-          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-indigo-600">Local SEO audit report</p>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-wider" style={{ color: accent }}>Local SEO audit report</p>
           <h2 className="mt-1 break-words text-2xl font-bold text-slate-900">{businessName}</h2>
           <p className="mt-1 break-all text-sm text-slate-500">{audit.target_url}</p>
         </div>
@@ -80,6 +85,18 @@ export function AuditReport({ audit, removesWatermark, logoData, planId = 'free'
       </header>
 
       <div className="space-y-10 px-6 py-8 sm:px-10">
+        <section>
+          <SectionTitle>Executive summary</SectionTitle>
+          <ul className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
+            {summaryLines.map((line, index) => (
+              <li key={index} className="flex gap-2 text-sm leading-[1.6] text-slate-700">
+                <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: accent }} />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <ScoreRingSection
           label="Overall score"
           score={overall}
@@ -213,8 +230,10 @@ export function AuditReport({ audit, removesWatermark, logoData, planId = 'free'
         </section>
       </div>
 
-      <footer className="flex items-center justify-between border-t border-slate-200 px-6 py-4 text-xs text-slate-500 sm:px-10">
-        <span>Prepared with AuditFlow SEO · {planId} plan</span>
+      <footer className="flex flex-col gap-1 border-t border-slate-200 px-6 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+        <span>
+          {planId !== 'free' && agencyName ? `Prepared by ${agencyName}` : `Prepared with AuditFlow SEO · ${planId} plan`}
+        </span>
         <span>{audit.target_kind === 'google_maps' ? 'Google Maps listing' : 'Website audit'}</span>
       </footer>
 
@@ -318,8 +337,14 @@ function CompetitorGap({ label, value, detail }: { label: string; value: string;
 }
 
 function SectionTitle({ children }: { children: string }) {
-  return <h3 className="border-l-4 border-indigo-600 pl-3 text-base font-semibold text-slate-900">{children}</h3>;
+  return <h3 className="border-l-4 pl-3 text-base font-semibold text-slate-900" style={{ borderColor: '#4f46e5' }}>{children}</h3>;
 }
+
+function SectionTitleAccent({ children, accent }: { children: string; accent: string }) {
+  return <h3 className="border-l-4 pl-3 text-base font-semibold text-slate-900" style={{ borderColor: accent }}>{children}</h3>;
+}
+
+export { SectionTitleAccent };
 
 function Stat({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (

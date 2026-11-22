@@ -32,6 +32,9 @@ export interface AuditRecord {
   created_at: string;
   is_published?: boolean;
   published_at?: string | null;
+  is_share_enabled?: boolean;
+  share_token?: string | null;
+  client_tag?: string | null;
 }
 
 export type AuditPayload = Omit<AuditRecord, 'id' | 'created_at' | 'is_published' | 'published_at'>;

@@ -12,9 +12,12 @@ import { NewAuditPage } from '@/pages/dashboard/NewAuditPage';
 import { MessageDeveloperPage } from '@/pages/dashboard/MessageDeveloperPage';
 import { PublicFeedPage } from '@/pages/dashboard/PublicFeedPage';
 import { SavedAuditsPage } from '@/pages/dashboard/SavedAuditsPage';
+import { ComparePage } from '@/pages/dashboard/ComparePage';
+import { SharePage } from '@/pages/SharePage';
 
 const AUDIT_ROUTE = /^\/dashboard\/audits\/([^/]+)$/;
 const FEED_POST_ROUTE = /^\/dashboard\/feed\/([^/]+)$/;
+const SHARE_ROUTE = /^\/share\/([A-Za-z0-9]+)$/;
 
 function NotFoundPage() {
   return (
@@ -45,6 +48,8 @@ function renderDashboardPage(pathname: string) {
       return <NewAuditPage />;
     case '/dashboard/saved':
       return <SavedAuditsPage />;
+    case '/dashboard/compare':
+      return <ComparePage />;
     case '/dashboard/feed':
       return <PublicFeedPage />;
     case '/dashboard/billing':
@@ -64,6 +69,8 @@ function AppRoutes() {
   if (pathname === '/') return <LandingPage />;
   if (pathname === '/auth') return <AuthPage />;
   if (pathname === '/sample') return <SamplePage />;
+  const shareMatch = pathname.match(SHARE_ROUTE);
+  if (shareMatch) return <SharePage token={shareMatch[1]} />;
   if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
     return <DashboardLayout>{renderDashboardPage(pathname)}</DashboardLayout>;
   }
