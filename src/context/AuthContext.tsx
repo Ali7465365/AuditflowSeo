@@ -32,6 +32,8 @@ export interface Profile {
   period_start: string;
   agency_logo_data: string | null;
   avatar_style: AvatarStyle | null;
+  brand_color: string | null;
+  agency_name: string | null;
 }
 
 interface AuthValue {
@@ -46,7 +48,7 @@ interface AuthValue {
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-const PROFILE_COLUMNS = 'user_id, email, plan, audits_used, period_start, agency_logo_data, avatar_style';
+const PROFILE_COLUMNS = 'user_id, email, plan, audits_used, period_start, agency_logo_data, avatar_style, brand_color, agency_name';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

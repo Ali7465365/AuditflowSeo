@@ -1,6 +1,7 @@
 import { Gauge, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { useState, type ChangeEvent } from 'react';
 import { AvatarCustomizer } from '@/components/dashboard/AvatarCustomizer';
+import { TeamSection } from '@/components/dashboard/TeamSection';
 import { useAuth, useProfile, type Profile } from '@/context/AuthContext';
 import { PLAN_MAP } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
@@ -22,12 +23,17 @@ export function AgencySettingsPage() {
   const profile = useProfile();
   const { setProfile } = useAuth();
   const [draft, setDraft] = useState<string | null>(profile.agency_logo_data);
+  const [agencyName, setAgencyName] = useState(profile.agency_name ?? '');
+  const [brandColor, setBrandColor] = useState(profile.brand_color ?? '#6366f1');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const plan = PLAN_MAP[profile.plan];
-  const dirty = draft !== profile.agency_logo_data;
+  const dirty =
+    draft !== profile.agency_logo_data ||
+    agencyName !== (profile.agency_name ?? '') ||
+    brandColor !== (profile.brand_color ?? '#6366f1');
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -58,21 +64,33 @@ export function AgencySettingsPage() {
     setError(null);
     setNotice(null);
 
+    const hex = /^#[0-9a-fA-F]{6}$/;
+    if (brandColor && !hex.test(brandColor)) {
+      setSaving(false);
+      setError('Brand color must be a hex value like #6366f1.');
+      return;
+    }
+
     const { data, error: updateError } = await supabase
       .from('profiles')
-      .update({ agency_logo_data: draft })
+      .update({
+        agency_logo_data: draft,
+        agency_name: agencyName.trim() || null,
+        brand_color: hex.test(brandColor) ? brandColor : null,
+      })
       .eq('user_id', profile.user_id)
-      .select('user_id, agency_logo_data')
+      .select('user_id, agency_logo_data, agency_name, brand_color')
       .maybeSingle();
 
     setSaving(false);
 
     if (updateError || !data) {
-      setError('We could not save your logo. Please try again.');
+      setError('We could not save your branding. Please try again.');
       return;
     }
-    setProfile({ ...profile, agency_logo_data: (data as Profile).agency_logo_data });
-    setNotice(draft ? 'Your logo is saved and will appear on new reports.' : 'Your logo has been removed.');
+    const saved = data as Profile;
+    setProfile({ ...profile, agency_logo_data: saved.agency_logo_data, agency_name: saved.agency_name, brand_color: saved.brand_color });
+    setNotice('Your branding is saved and will appear on new reports.');
   }
 
   return (
@@ -154,15 +172,18 @@ export function AgencySettingsPage() {
               <img src={draft} alt="" className="h-10 max-w-[200px] object-contain object-left" />
             ) : (
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: brandColor }}>
                   <Gauge className="h-4 w-4 text-white" aria-hidden="true" />
                 </span>
-                <span className="font-semibold text-slate-900">AuditFlow SEO</span>
+                <span className="font-semibold text-slate-900">{plan.removesWatermark && agencyName ? agencyName : 'AuditFlow SEO'}</span>
               </div>
             )}
-            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-indigo-600">Local SEO audit</p>
+            <p className="mt-6 text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>Local SEO audit</p>
             <p className="mt-1 text-xl font-bold">Brightside Dental Care</p>
             <p className="mt-1 text-sm text-slate-500">brightsidedentalcare.com</p>
+            {plan.rank >= 2 && agencyName && (
+              <p className="mt-6 border-t border-slate-200 pt-4 text-xs text-slate-500">Prepared by {agencyName}</p>
+            )}
           </div>
           <p className="text-xs text-slate-500">
             The preview shows how your header looks on Pro and higher plans.
@@ -170,7 +191,58 @@ export function AgencySettingsPage() {
         </section>
       </div>
 
+      <section className="space-y-5 rounded-2xl border border-white/10 bg-slate-900/60 p-6 sm:p-8">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Brand identity</h2>
+          <p className="mt-1 text-sm text-slate-400">Your agency name and brand color appear on white-label reports (Pro and higher).</p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="agency-name" className="mb-2 block text-sm font-medium text-slate-300">Agency display name</label>
+            <input
+              id="agency-name"
+              type="text"
+              value={agencyName}
+              onChange={(event) => setAgencyName(event.target.value)}
+              placeholder="Bright Digital Agency"
+              maxLength={60}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            />
+          </div>
+          <div>
+            <label htmlFor="brand-color" className="mb-2 block text-sm font-medium text-slate-300">Brand color</label>
+            <div className="flex items-center gap-3">
+              <input
+                id="brand-color"
+                type="color"
+                value={brandColor}
+                onChange={(event) => setBrandColor(event.target.value)}
+                className="h-11 w-14 cursor-pointer rounded-lg border border-white/10 bg-slate-950/60 p-1"
+              />
+              <input
+                type="text"
+                value={brandColor}
+                onChange={(event) => setBrandColor(event.target.value)}
+                maxLength={7}
+                className="w-28 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2.5 text-sm font-mono text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!dirty || saving}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all hover:-translate-y-0.5 hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 sm:w-auto sm:px-8"
+        >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          Save branding
+        </button>
+      </section>
+
       <AvatarCustomizer />
+
+      <TeamSection />
     </div>
   );
 }
